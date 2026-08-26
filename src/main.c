@@ -7,6 +7,7 @@
 #include "../include/benchmark_suite.h"
 #include "../include/optimizer.h"
 #include "../include/shm_optimizer.h"
+#include "../include/adaptive_selector.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -46,6 +47,26 @@ int main(int argc, char **argv) {
     const char *cmd = argv[1];
     unsigned long long size_mb = 0;
     unsigned long long chunk_kb = 0;
+
+    /* Special handling for commands that take only size_mb argument */
+    if (strcmp(cmd, "recommend") == 0 || strcmp(cmd, "auto") == 0) {
+        if (argc != 3) { 
+            fprintf(stderr, "Usage: %s %s <size_mb>\n", argv[0], cmd);
+            return 1; 
+        }
+        if (parse_positive(argv[2], &size_mb) != 0) {
+            fprintf(stderr, "Size must be a positive integer.\n");
+            return 1;
+        }
+        size_t total_bytes = (size_t)size_mb * 1024ULL * 1024ULL;
+        if (strcmp(cmd, "recommend") == 0) {
+            if (adaptive_recommend(total_bytes) != 0) return 2;
+            return 0;
+        } else {
+            if (adaptive_auto(total_bytes) != 0) return 2;
+            return 0;
+        }
+    }
 
     /* Validate argument counts per command */
     if (strcmp(cmd, "optimize-shm") == 0) {
