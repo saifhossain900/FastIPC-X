@@ -4,6 +4,7 @@
 #include "../include/socket_ipc.h"
 #include "../include/shm_ipc.h"
 #include "../include/benchmark_suite.h"
+#include "../include/optimizer.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -102,6 +103,19 @@ int main(int argc, char **argv) {
         char csvpath[256];
         snprintf(csvpath, sizeof(csvpath), "results/benchmark_%zuMB.csv", (size_t)size_mb);
         if (run_benchmark_suite(total_bytes, (size_t)trials, default_chunk, csvpath) != 0) {
+            return 2;
+        }
+        return 0;
+    }
+
+    if (strcmp(argv[1], "optimize-chunk") == 0) {
+        unsigned long long trials = 0;
+        if (parse_positive(argv[3], &trials) != 0) {
+            fprintf(stderr, "trials must be a positive integer.\n");
+            return 1;
+        }
+
+        if (run_chunk_optimizer(total_bytes, (size_t)trials) != 0) {
             return 2;
         }
         return 0;
