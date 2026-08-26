@@ -1,0 +1,5 @@
+fastipc
+*.o
+*.out
+.vscode/
+results/*.tmp
