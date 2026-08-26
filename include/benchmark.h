@@ -6,6 +6,9 @@
 typedef struct {
     double elapsed_ms;
     double throughput_mbps;
+    /* CPU times (milliseconds) aggregated across parent+child where applicable. */
+    double user_ms;
+    double sys_ms;
     long voluntary_ctx_switches;
     long involuntary_ctx_switches;
 } BenchmarkResult;

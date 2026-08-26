@@ -3,6 +3,7 @@
 #include "../include/fifo_ipc.h"
 #include "../include/socket_ipc.h"
 #include "../include/shm_ipc.h"
+#include "../include/benchmark_suite.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -86,6 +87,23 @@ int main(int argc, char **argv) {
         }
 
         print_result("SHM", total_bytes, &result);
+        return 0;
+    }
+
+    if (strcmp(argv[1], "benchmark") == 0) {
+        unsigned long long trials = 0;
+        if (parse_positive(argv[3], &trials) != 0) {
+            fprintf(stderr, "trials must be a positive integer.\n");
+            return 1;
+        }
+
+        /* Use default chunk size 64KB for benchmark command */
+        size_t default_chunk = 64 * 1024;
+        char csvpath[256];
+        snprintf(csvpath, sizeof(csvpath), "results/benchmark_%zuMB.csv", (size_t)size_mb);
+        if (run_benchmark_suite(total_bytes, (size_t)trials, default_chunk, csvpath) != 0) {
+            return 2;
+        }
         return 0;
     }
 
