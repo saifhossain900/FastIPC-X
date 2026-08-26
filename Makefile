@@ -1,8 +1,9 @@
 CC = gcc
-CFLAGS = -O2 -Wall -Wextra -Wpedantic -std=c11 -D_POSIX_C_SOURCE=200809L
+CFLAGS = -O2 -Wall -Wextra -Wpedantic -std=c11 -D_POSIX_C_SOURCE=200809L -pthread
 INCLUDES = -Iinclude
 
-SRC = src/main.c src/benchmark.c src/pipe_ipc.c src/fifo_ipc.c src/socket_ipc.c
+SRC = src/main.c src/benchmark.c src/pipe_ipc.c src/fifo_ipc.c src/socket_ipc.c src/shm_ipc.c
+LDLIBS = -pthread
 OBJ = $(SRC:.c=.o)
 TARGET = fastipc
 

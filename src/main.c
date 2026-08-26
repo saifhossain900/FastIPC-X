@@ -2,6 +2,7 @@
 #include "../include/pipe_ipc.h"
 #include "../include/fifo_ipc.h"
 #include "../include/socket_ipc.h"
+#include "../include/shm_ipc.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -14,6 +15,7 @@ static void usage(const char *program) {
     printf("  %s pipe <size_mb> <chunk_kb>\n", program);
     printf("  %s fifo <size_mb> <chunk_kb>\n", program);
     printf("  %s socket <size_mb> <chunk_kb>\n\n", program);
+    printf("  %s shm <size_mb> <chunk_kb>\n\n", program);
     printf("Example:\n");
     printf("  %s pipe 100 64\n", program);
 }
@@ -75,6 +77,15 @@ int main(int argc, char **argv) {
         }
 
         print_result("SOCKET", total_bytes, &result);
+        return 0;
+    }
+
+    if (strcmp(argv[1], "shm") == 0) {
+        if (run_shm_benchmark(total_bytes, chunk_size, &result) != 0) {
+            return 2;
+        }
+
+        print_result("SHM", total_bytes, &result);
         return 0;
     }
 
