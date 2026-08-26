@@ -1,0 +1,3 @@
+variant,payload_mb,chunk_kb,median_ms,median_throughput_mbps,mean_user_cpu_ms,mean_system_cpu_ms,mean_voluntary_ctx_switches,mean_involuntary_ctx_switches
+baseline,100,64,46.680984,2149.403176,4.438200,32.064000,3150.20,0.00
+ringbuffer,100,64,5.609124,17515.551116,1.538000,4.953400,362.20,0.00

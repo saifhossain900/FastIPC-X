@@ -3,8 +3,10 @@
 #include "../include/fifo_ipc.h"
 #include "../include/socket_ipc.h"
 #include "../include/shm_ipc.h"
+#include "../include/shm_ring_ipc.h"
 #include "../include/benchmark_suite.h"
 #include "../include/optimizer.h"
+#include "../include/shm_optimizer.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -36,18 +38,29 @@ static int parse_positive(const char *text, unsigned long long *out) {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 4) {
+    if (argc < 2) {
         usage(argv[0]);
         return 1;
     }
 
+    const char *cmd = argv[1];
     unsigned long long size_mb = 0;
     unsigned long long chunk_kb = 0;
 
-    if (parse_positive(argv[2], &size_mb) != 0 ||
-        parse_positive(argv[3], &chunk_kb) != 0) {
-        fprintf(stderr, "Size and chunk must be positive integers.\n");
-        return 1;
+    /* Validate argument counts per command */
+    if (strcmp(cmd, "optimize-shm") == 0) {
+        if (argc != 5) { usage(argv[0]); return 1; }
+        if (parse_positive(argv[2], &size_mb) != 0 || parse_positive(argv[3], &chunk_kb) != 0) {
+            fprintf(stderr, "Size and chunk must be positive integers.\n");
+            return 1;
+        }
+    } else {
+        /* Most commands expect 3 arguments after program */
+        if (argc != 4) { usage(argv[0]); return 1; }
+        if (parse_positive(argv[2], &size_mb) != 0 || parse_positive(argv[3], &chunk_kb) != 0) {
+            fprintf(stderr, "Size and chunk must be positive integers.\n");
+            return 1;
+        }
     }
 
     size_t total_bytes = (size_t)size_mb * 1024ULL * 1024ULL;
@@ -88,6 +101,32 @@ int main(int argc, char **argv) {
         }
 
         print_result("SHM", total_bytes, &result);
+        return 0;
+    }
+
+    if (strcmp(argv[1], "shm-opt") == 0) {
+        if (run_shm_ring_benchmark(total_bytes, chunk_size, &result) != 0) {
+            return 2;
+        }
+
+        print_result("SHM-OPT", total_bytes, &result);
+        return 0;
+    }
+
+    if (strcmp(argv[1], "optimize-shm") == 0) {
+        if (argc != 5) {
+            fprintf(stderr, "Usage: %s optimize-shm <size_mb> <chunk_kb> <trials>\n", argv[0]);
+            return 1;
+        }
+        unsigned long long trials = 0;
+        if (parse_positive(argv[4], &trials) != 0) {
+            fprintf(stderr, "trials must be a positive integer.\n");
+            return 1;
+        }
+
+        if (run_shm_optimization(total_bytes, chunk_size, (size_t)trials) != 0) {
+            return 2;
+        }
         return 0;
     }
 
