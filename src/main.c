@@ -1,5 +1,6 @@
 #include "../include/benchmark.h"
 #include "../include/pipe_ipc.h"
+#include "../include/fifo_ipc.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -9,7 +10,8 @@
 static void usage(const char *program) {
     printf("FastIPC-X - Adaptive IPC Optimization Engine\n\n");
     printf("Usage:\n");
-    printf("  %s pipe <size_mb> <chunk_kb>\n\n", program);
+    printf("  %s pipe <size_mb> <chunk_kb>\n", program);
+    printf("  %s fifo <size_mb> <chunk_kb>\n\n", program);
     printf("Example:\n");
     printf("  %s pipe 100 64\n", program);
 }
@@ -53,6 +55,15 @@ int main(int argc, char **argv) {
         }
 
         print_result("PIPE", total_bytes, &result);
+        return 0;
+    }
+
+    if (strcmp(argv[1], "fifo") == 0) {
+        if (run_fifo_benchmark(total_bytes, chunk_size, &result) != 0) {
+            return 2;
+        }
+
+        print_result("FIFO", total_bytes, &result);
         return 0;
     }
 
