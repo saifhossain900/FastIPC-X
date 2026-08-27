@@ -9,6 +9,7 @@
 #include "../include/shm_optimizer.h"
 #include "../include/adaptive_selector.h"
 #include "../include/syscall_profiler.h"
+#include "../include/integrity_verifier.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -16,9 +17,9 @@
 #include <string.h>
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    Usage / Help
-   --------------------------------------------------------- */
+   ========================================================= */
 
 static void usage(const char *program)
 {
@@ -36,7 +37,10 @@ static void usage(const char *program)
     printf("\nBenchmark / Optimization:\n");
     printf("  %s benchmark <size_mb> <trials>\n", program);
     printf("  %s optimize-chunk <size_mb> <trials>\n", program);
-    printf("  %s optimize-shm <size_mb> <chunk_kb> <trials>\n", program);
+    printf(
+        "  %s optimize-shm <size_mb> <chunk_kb> <trials>\n",
+        program
+    );
 
     printf("\nAdaptive Selection:\n");
     printf("  %s recommend <size_mb>\n", program);
@@ -53,7 +57,16 @@ static void usage(const char *program)
         program
     );
 
+    printf("\nCorrectness Verification:\n");
+    printf(
+        "  %s verify <method> <size_mb> <chunk_kb>\n",
+        program
+    );
+
     printf("\nSupported profile methods:\n");
+    printf("  pipe fifo socket shm shm-opt\n");
+
+    printf("\nSupported verification methods:\n");
     printf("  pipe fifo socket shm shm-opt\n");
 
     printf("\nExamples:\n");
@@ -68,14 +81,18 @@ static void usage(const char *program)
         "  %s compare-syscalls shm shm-opt 100 64\n",
         program
     );
+    printf(
+        "  %s verify shm-opt 100 64\n",
+        program
+    );
 
     printf("\n");
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    Positive integer parser
-   --------------------------------------------------------- */
+   ========================================================= */
 
 static int parse_positive(
     const char *text,
@@ -96,7 +113,7 @@ static int parse_positive(
     if (
         errno != 0 ||
         end == text ||
-        !end ||
+        end == NULL ||
         *end != '\0' ||
         value == 0
     ) {
@@ -109,9 +126,9 @@ static int parse_positive(
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    Main
-   --------------------------------------------------------- */
+   ========================================================= */
 
 int main(int argc, char **argv)
 {
@@ -125,11 +142,15 @@ int main(int argc, char **argv)
 
     /* =====================================================
        ADAPTIVE RECOMMEND
+
+       Example:
+       ./fastipc recommend 100
        ===================================================== */
 
     if (strcmp(cmd, "recommend") == 0) {
 
         if (argc != 3) {
+
             fprintf(
                 stderr,
                 "Usage: %s recommend <size_mb>\n",
@@ -174,11 +195,15 @@ int main(int argc, char **argv)
 
     /* =====================================================
        ADAPTIVE AUTO
+
+       Example:
+       ./fastipc auto 100
        ===================================================== */
 
     if (strcmp(cmd, "auto") == 0) {
 
         if (argc != 3) {
+
             fprintf(
                 stderr,
                 "Usage: %s auto <size_mb>\n",
@@ -383,6 +408,80 @@ int main(int argc, char **argv)
 
 
     /* =====================================================
+       DATA INTEGRITY VERIFICATION
+
+       Example:
+       ./fastipc verify shm-opt 100 64
+       ===================================================== */
+
+    if (strcmp(cmd, "verify") == 0) {
+
+        if (argc != 5) {
+
+            fprintf(
+                stderr,
+                "Usage: %s verify "
+                "<method> <size_mb> <chunk_kb>\n",
+                argv[0]
+            );
+
+            fprintf(
+                stderr,
+                "Methods: pipe fifo socket shm shm-opt\n"
+            );
+
+            return 1;
+        }
+
+        const char *method =
+            argv[2];
+
+        unsigned long long size_mb = 0;
+        unsigned long long chunk_kb = 0;
+
+        if (
+            parse_positive(
+                argv[3],
+                &size_mb
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        if (
+            parse_positive(
+                argv[4],
+                &chunk_kb
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Chunk size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        if (
+            run_integrity_verification(
+                method,
+                (size_t)size_mb,
+                (size_t)chunk_kb
+            ) != 0
+        ) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+
+    /* =====================================================
        BENCHMARK SUITE
 
        Example:
@@ -440,8 +539,8 @@ int main(int argc, char **argv)
             1024ULL;
 
         /*
-         * Benchmark suite uses a controlled
-         * default chunk size of 64 KB.
+         * Controlled default chunk size
+         * for benchmark suite = 64 KB
          */
         size_t default_chunk =
             64 * 1024;
@@ -764,12 +863,7 @@ int main(int argc, char **argv)
 
         /* ---------------- SOCKET ---------------- */
 
-        if (
-            strcmp(
-                cmd,
-                "socket"
-            ) == 0
-        ) {
+        if (strcmp(cmd, "socket") == 0) {
 
             if (
                 run_socket_benchmark(
@@ -817,12 +911,7 @@ int main(int argc, char **argv)
 
         /* ---------------- SHM OPT ---------------- */
 
-        if (
-            strcmp(
-                cmd,
-                "shm-opt"
-            ) == 0
-        ) {
+        if (strcmp(cmd, "shm-opt") == 0) {
 
             if (
                 run_shm_ring_benchmark(

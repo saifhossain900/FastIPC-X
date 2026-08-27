@@ -1,0 +1,2 @@
+method,payload_mb,chunk_kb,bytes_sent,bytes_received,sender_checksum,receiver_checksum,result
+FIFO,10,64,10485760,10485760,0xeb0d3fb8b7e22325,0xeb0d3fb8b7e22325,PASS

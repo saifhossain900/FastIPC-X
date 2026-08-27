@@ -15,7 +15,8 @@ SRC = src/main.c \
       src/shm_ring_ipc.c \
       src/shm_optimizer.c \
       src/adaptive_selector.c \
-      src/syscall_profiler.c
+      src/syscall_profiler.c \
+      src/integrity_verifier.c
 
 LDLIBS = -pthread
 
