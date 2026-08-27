@@ -1,6 +1,8 @@
 CC = gcc
 
-CFLAGS = -O2 -Wall -Wextra -Wpedantic -std=c11 -D_POSIX_C_SOURCE=200809L -pthread
+BASE_CFLAGS = -O2 -Wall -Wextra -Wpedantic -std=c11 -D_POSIX_C_SOURCE=200809L -pthread
+
+CFLAGS = $(BASE_CFLAGS) -DFASTIPCX_BUILD_FLAGS='"$(BASE_CFLAGS)"'
 
 INCLUDES = -Iinclude
 
@@ -18,7 +20,8 @@ SRC = src/main.c \
       src/syscall_profiler.c \
       src/integrity_verifier.c \
       src/workload_profiler.c \
-      src/shm_ring_slot_optimizer.c
+      src/shm_ring_slot_optimizer.c \
+      src/environment_profiler.c
 
 LDLIBS = -pthread
 

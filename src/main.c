@@ -12,6 +12,7 @@
 #include "../include/integrity_verifier.h"
 #include "../include/workload_profiler.h"
 #include "../include/shm_ring_slot_optimizer.h"
+#include "../include/environment_profiler.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -59,6 +60,9 @@ static void usage(const char *program)
         program
     );
 
+    printf("\nSystem / Environment:\n");
+    printf("  %s environment\n", program);
+
     printf("\nSystem Call Analysis:\n");
     printf(
         "  %s profile <method> <size_mb> <chunk_kb>\n",
@@ -94,6 +98,7 @@ static void usage(const char *program)
     printf("  %s recommend 100\n", program);
     printf("  %s auto 100\n", program);
     printf("  %s build-workloads 3\n", program);
+    printf("  %s environment\n", program);
     printf("  %s profile pipe 10 64\n", program);
     printf(
         "  %s compare-syscalls shm shm-opt 100 64\n",
@@ -309,6 +314,36 @@ int main(int argc, char **argv)
             run_workload_profiles(
                 (size_t)trials
             ) != 0
+        ) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+
+    /* =====================================================
+       SYSTEM / ENVIRONMENT PROFILER
+
+       Example:
+       ./fastipc environment
+       ===================================================== */
+
+    if (strcmp(cmd, "environment") == 0) {
+
+        if (argc != 2) {
+
+            fprintf(
+                stderr,
+                "Usage: %s environment\n",
+                argv[0]
+            );
+
+            return 1;
+        }
+
+        if (
+            run_environment_profiler() != 0
         ) {
             return 2;
         }

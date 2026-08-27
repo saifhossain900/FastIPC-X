@@ -1,0 +1,30 @@
+FASTIPC-X SYSTEM / ENVIRONMENT PROFILE
+============================================================
+
+Timestamp              : 2026-08-27 21:16:00 +0600
+Operating system       : Ubuntu 26.04 LTS
+Kernel name            : Linux
+Kernel release         : 6.18.33.2-microsoft-standard-WSL2
+Kernel version         : #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026
+Architecture           : x86_64
+Hostname               : DESKTOP-BB9H1BQ
+WSL detected           : YES
+
+CPU
+------------------------------------------------------------
+CPU model              : 12th Gen Intel(R) Core(TM) i5-12500H
+Logical CPUs           : 16
+
+Memory
+------------------------------------------------------------
+Page size              : 4096 bytes
+Total memory           : 7.62 GiB
+Available memory       : 5.97 GiB
+
+Build
+------------------------------------------------------------
+Compiler               : GCC
+Compiler version       : 15.2.0
+C standard             : C11
+Compiler optimization  : Enabled
+Build flags            : -O2 -Wall -Wextra -Wpedantic -std=c11 -D_POSIX_C_SOURCE=200809L -pthread
