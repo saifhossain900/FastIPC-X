@@ -1,0 +1,2 @@
+method,payload_mb,chunk_kb,bytes_sent,bytes_received,sender_checksum,receiver_checksum,result
+SHM-RING,100,64,104857600,104857600,0x4db2d92e89a22325,0x4db2d92e89a22325,PASS

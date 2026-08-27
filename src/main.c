@@ -11,6 +11,7 @@
 #include "../include/syscall_profiler.h"
 #include "../include/integrity_verifier.h"
 #include "../include/workload_profiler.h"
+#include "../include/shm_ring_slot_optimizer.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -40,6 +41,11 @@ static void usage(const char *program)
     printf("  %s optimize-chunk <size_mb> <trials>\n", program);
     printf(
         "  %s optimize-shm <size_mb> <chunk_kb> <trials>\n",
+        program
+    );
+    printf(
+        "  %s optimize-ring-slots "
+        "<size_mb> <chunk_kb> <trials>\n",
         program
     );
 
@@ -81,6 +87,10 @@ static void usage(const char *program)
     printf("  %s benchmark 100 5\n", program);
     printf("  %s optimize-chunk 100 5\n", program);
     printf("  %s optimize-shm 100 64 5\n", program);
+    printf(
+        "  %s optimize-ring-slots 100 64 5\n",
+        program
+    );
     printf("  %s recommend 100\n", program);
     printf("  %s auto 100\n", program);
     printf("  %s build-workloads 3\n", program);
@@ -791,6 +801,112 @@ int main(int argc, char **argv)
         ) {
             return 2;
         }
+
+        return 0;
+    }
+
+
+    /* =====================================================
+       SHM RING SLOT OPTIMIZER
+
+       Example:
+       ./fastipc optimize-ring-slots 100 64 5
+       ===================================================== */
+
+    if (
+        strcmp(
+            cmd,
+            "optimize-ring-slots"
+        ) == 0
+    ) {
+
+        if (argc != 5) {
+
+            fprintf(
+                stderr,
+                "Usage: %s optimize-ring-slots "
+                "<size_mb> <chunk_kb> <trials>\n",
+                argv[0]
+            );
+
+            return 1;
+        }
+
+        unsigned long long size_mb = 0;
+        unsigned long long chunk_kb = 0;
+        unsigned long long trials = 0;
+
+
+        if (
+            parse_positive(
+                argv[2],
+                &size_mb
+            ) != 0
+        ) {
+
+            fprintf(
+                stderr,
+                "Size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+
+        if (
+            parse_positive(
+                argv[3],
+                &chunk_kb
+            ) != 0
+        ) {
+
+            fprintf(
+                stderr,
+                "Chunk size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+
+        if (
+            parse_positive(
+                argv[4],
+                &trials
+            ) != 0
+        ) {
+
+            fprintf(
+                stderr,
+                "Trials must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+
+        size_t total_bytes =
+            (size_t)size_mb *
+            1024ULL *
+            1024ULL;
+
+
+        size_t chunk_size =
+            (size_t)chunk_kb *
+            1024ULL;
+
+
+        if (
+            run_shm_ring_slot_optimizer(
+                total_bytes,
+                chunk_size,
+                (size_t)trials
+            ) != 0
+        ) {
+
+            return 2;
+        }
+
 
         return 0;
     }
