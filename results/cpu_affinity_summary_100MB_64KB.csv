@@ -1,0 +1,4 @@
+mode,producer_cpu,consumer_cpu,median_ms,median_throughput_mbps,average_user_ms,average_system_ms,average_voluntary_ctx_switches,average_involuntary_ctx_switches,selected
+UNPINNED,-1,-1,6.171157,16204.416767,1.862000,5.069000,379.00,0.00,0
+SAME-CPU,0,0,4.825617,20722.738665,3.219000,2.043000,1566.40,1553.60,1
+SEPARATE-CPU,0,2,7.252378,13788.580790,2.700200,5.420800,419.40,0.00,0

@@ -1,0 +1,2 @@
+run_id,timestamp,category,command,command_exit_code,command_status,git_commit,git_branch,source_tree_state,environment_profile,result_files
+"20260828_005147_179522","2026-08-28 00:51:47 +0600","cpu-affinity-analysis","./fastipc analyze-affinity 100 64 5",0,"SUCCESS","d534795d437322ac9183356ee46a07de22fa2710","main","CLEAN","results/system_environment.txt","results/cpu_affinity_trials_100MB_64KB.csv;results/cpu_affinity_summary_100MB_64KB.csv"

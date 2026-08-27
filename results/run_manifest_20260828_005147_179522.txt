@@ -1,0 +1,23 @@
+FASTIPC-X EXPERIMENT RUN MANIFEST
+============================================================
+
+Run ID                 : 20260828_005147_179522
+Timestamp              : 2026-08-28 00:51:47 +0600
+Category               : cpu-affinity-analysis
+Command                : ./fastipc analyze-affinity 100 64 5
+Command exit code      : 0
+Command status         : SUCCESS
+
+Git / Source Revision
+------------------------------------------------------------
+Git commit             : d534795d437322ac9183356ee46a07de22fa2710
+Git branch             : main
+Source-tree state      : CLEAN
+
+Environment
+------------------------------------------------------------
+Environment profile    : results/system_environment.txt
+
+Experimental Output
+------------------------------------------------------------
+Result files           : results/cpu_affinity_trials_100MB_64KB.csv;results/cpu_affinity_summary_100MB_64KB.csv
