@@ -13,11 +13,15 @@
 #include "../include/workload_profiler.h"
 #include "../include/shm_ring_slot_optimizer.h"
 #include "../include/environment_profiler.h"
+#include "../include/run_manifest.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+
+#define RESULT_PATH_BUFFER 2048
 
 
 /* =========================================================
@@ -40,10 +44,12 @@ static void usage(const char *program)
     printf("\nBenchmark / Optimization:\n");
     printf("  %s benchmark <size_mb> <trials>\n", program);
     printf("  %s optimize-chunk <size_mb> <trials>\n", program);
+
     printf(
         "  %s optimize-shm <size_mb> <chunk_kb> <trials>\n",
         program
     );
+
     printf(
         "  %s optimize-ring-slots "
         "<size_mb> <chunk_kb> <trials>\n",
@@ -55,6 +61,7 @@ static void usage(const char *program)
     printf("  %s auto <size_mb>\n", program);
 
     printf("\nMulti-Workload Adaptive Analysis:\n");
+
     printf(
         "  %s build-workloads <trials>\n",
         program
@@ -64,10 +71,12 @@ static void usage(const char *program)
     printf("  %s environment\n", program);
 
     printf("\nSystem Call Analysis:\n");
+
     printf(
         "  %s profile <method> <size_mb> <chunk_kb>\n",
         program
     );
+
     printf(
         "  %s compare-syscalls <baseline> <optimized> "
         "<size_mb> <chunk_kb>\n",
@@ -75,10 +84,14 @@ static void usage(const char *program)
     );
 
     printf("\nCorrectness Verification:\n");
+
     printf(
         "  %s verify <method> <size_mb> <chunk_kb>\n",
         program
     );
+
+    printf("\nReproducibility:\n");
+    printf("  Experiment commands automatically create run manifests.\n");
 
     printf("\nSupported profile methods:\n");
     printf("  pipe fifo socket shm shm-opt\n");
@@ -91,19 +104,23 @@ static void usage(const char *program)
     printf("  %s benchmark 100 5\n", program);
     printf("  %s optimize-chunk 100 5\n", program);
     printf("  %s optimize-shm 100 64 5\n", program);
+
     printf(
         "  %s optimize-ring-slots 100 64 5\n",
         program
     );
+
     printf("  %s recommend 100\n", program);
     printf("  %s auto 100\n", program);
     printf("  %s build-workloads 3\n", program);
     printf("  %s environment\n", program);
     printf("  %s profile pipe 10 64\n", program);
+
     printf(
         "  %s compare-syscalls shm shm-opt 100 64\n",
         program
     );
+
     printf(
         "  %s verify shm-opt 100 64\n",
         program
@@ -150,6 +167,40 @@ static int parse_positive(
 
 
 /* =========================================================
+   Manifest helper
+
+   Manifest failure does not invalidate a benchmark that
+   already completed successfully. A warning is printed
+   instead.
+   ========================================================= */
+
+static void record_manifest(
+    int argc,
+    char **argv,
+    const char *category,
+    const char *result_files,
+    int command_exit_code
+)
+{
+    if (
+        write_run_manifest(
+            argc,
+            argv,
+            category,
+            result_files,
+            command_exit_code
+        ) != 0
+    ) {
+        fprintf(
+            stderr,
+            "Warning: experiment completed, but "
+            "run manifest could not be recorded.\n"
+        );
+    }
+}
+
+
+/* =========================================================
    Main
    ========================================================= */
 
@@ -160,7 +211,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    const char *cmd = argv[1];
+    const char *cmd =
+        argv[1];
 
 
     /* =====================================================
@@ -170,10 +222,13 @@ int main(int argc, char **argv)
        ./fastipc recommend 100
        ===================================================== */
 
-    if (strcmp(cmd, "recommend") == 0) {
-
+    if (
+        strcmp(
+            cmd,
+            "recommend"
+        ) == 0
+    ) {
         if (argc != 3) {
-
             fprintf(
                 stderr,
                 "Usage: %s recommend <size_mb>\n",
@@ -183,7 +238,8 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long size_mb = 0;
+        unsigned long long size_mb =
+            0;
 
         if (
             parse_positive(
@@ -204,11 +260,31 @@ int main(int argc, char **argv)
             1024ULL *
             1024ULL;
 
-        if (
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/adaptive_profile_%lluMB.csv",
+            size_mb
+        );
+
+        int rc =
             adaptive_recommend(
                 total_bytes
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "adaptive-recommendation",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -223,10 +299,13 @@ int main(int argc, char **argv)
        ./fastipc auto 100
        ===================================================== */
 
-    if (strcmp(cmd, "auto") == 0) {
-
+    if (
+        strcmp(
+            cmd,
+            "auto"
+        ) == 0
+    ) {
         if (argc != 3) {
-
             fprintf(
                 stderr,
                 "Usage: %s auto <size_mb>\n",
@@ -236,7 +315,8 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long size_mb = 0;
+        unsigned long long size_mb =
+            0;
 
         if (
             parse_positive(
@@ -257,11 +337,31 @@ int main(int argc, char **argv)
             1024ULL *
             1024ULL;
 
-        if (
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/adaptive_profile_%lluMB.csv",
+            size_mb
+        );
+
+        int rc =
             adaptive_auto(
                 total_bytes
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "adaptive-auto",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -282,9 +382,7 @@ int main(int argc, char **argv)
             "build-workloads"
         ) == 0
     ) {
-
         if (argc != 3) {
-
             fprintf(
                 stderr,
                 "Usage: %s build-workloads <trials>\n",
@@ -294,7 +392,8 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long trials = 0;
+        unsigned long long trials =
+            0;
 
         if (
             parse_positive(
@@ -310,11 +409,27 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (
+        const char *result_files =
+            "results/workload_adaptive_summary.csv;"
+            "results/adaptive_profile_1MB.csv;"
+            "results/adaptive_profile_10MB.csv;"
+            "results/adaptive_profile_100MB.csv;"
+            "results/adaptive_profile_500MB.csv";
+
+        int rc =
             run_workload_profiles(
                 (size_t)trials
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "multi-workload-adaptive-profile",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -329,10 +444,13 @@ int main(int argc, char **argv)
        ./fastipc environment
        ===================================================== */
 
-    if (strcmp(cmd, "environment") == 0) {
-
+    if (
+        strcmp(
+            cmd,
+            "environment"
+        ) == 0
+    ) {
         if (argc != 2) {
-
             fprintf(
                 stderr,
                 "Usage: %s environment\n",
@@ -342,9 +460,22 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (
-            run_environment_profiler() != 0
-        ) {
+        const char *result_files =
+            "results/system_environment.txt;"
+            "results/system_environment.csv";
+
+        int rc =
+            run_environment_profiler();
+
+        record_manifest(
+            argc,
+            argv,
+            "system-environment-profile",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -359,10 +490,13 @@ int main(int argc, char **argv)
        ./fastipc profile pipe 10 64
        ===================================================== */
 
-    if (strcmp(cmd, "profile") == 0) {
-
+    if (
+        strcmp(
+            cmd,
+            "profile"
+        ) == 0
+    ) {
         if (argc != 5) {
-
             fprintf(
                 stderr,
                 "Usage: %s profile "
@@ -381,8 +515,11 @@ int main(int argc, char **argv)
         const char *method =
             argv[2];
 
-        unsigned long long size_mb = 0;
-        unsigned long long chunk_kb = 0;
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long chunk_kb =
+            0;
 
         if (
             parse_positive(
@@ -412,13 +549,35 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/syscall_profile_%s_%lluMB_%lluKB.csv",
+            method,
+            size_mb,
+            chunk_kb
+        );
+
+        int rc =
             run_syscall_profile(
                 method,
                 (size_t)size_mb,
                 (size_t)chunk_kb
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "system-call-profile",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -439,9 +598,7 @@ int main(int argc, char **argv)
             "compare-syscalls"
         ) == 0
     ) {
-
         if (argc != 6) {
-
             fprintf(
                 stderr,
                 "Usage: %s compare-syscalls "
@@ -467,8 +624,11 @@ int main(int argc, char **argv)
         const char *optimized_method =
             argv[3];
 
-        unsigned long long size_mb = 0;
-        unsigned long long chunk_kb = 0;
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long chunk_kb =
+            0;
 
         if (
             parse_positive(
@@ -498,14 +658,38 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/syscall_comparison_%s_vs_%s_"
+            "%lluMB_%lluKB.csv",
+            baseline_method,
+            optimized_method,
+            size_mb,
+            chunk_kb
+        );
+
+        int rc =
             compare_syscall_profiles(
                 baseline_method,
                 optimized_method,
                 (size_t)size_mb,
                 (size_t)chunk_kb
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "system-call-comparison",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -520,10 +704,13 @@ int main(int argc, char **argv)
        ./fastipc verify shm-opt 100 64
        ===================================================== */
 
-    if (strcmp(cmd, "verify") == 0) {
-
+    if (
+        strcmp(
+            cmd,
+            "verify"
+        ) == 0
+    ) {
         if (argc != 5) {
-
             fprintf(
                 stderr,
                 "Usage: %s verify "
@@ -542,8 +729,11 @@ int main(int argc, char **argv)
         const char *method =
             argv[2];
 
-        unsigned long long size_mb = 0;
-        unsigned long long chunk_kb = 0;
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long chunk_kb =
+            0;
 
         if (
             parse_positive(
@@ -573,13 +763,35 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/integrity_%s_%lluMB_%lluKB.csv",
+            method,
+            size_mb,
+            chunk_kb
+        );
+
+        int rc =
             run_integrity_verification(
                 method,
                 (size_t)size_mb,
                 (size_t)chunk_kb
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "data-integrity-verification",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -594,10 +806,13 @@ int main(int argc, char **argv)
        ./fastipc benchmark 100 5
        ===================================================== */
 
-    if (strcmp(cmd, "benchmark") == 0) {
-
+    if (
+        strcmp(
+            cmd,
+            "benchmark"
+        ) == 0
+    ) {
         if (argc != 4) {
-
             fprintf(
                 stderr,
                 "Usage: %s benchmark "
@@ -608,8 +823,11 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long size_mb = 0;
-        unsigned long long trials = 0;
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long trials =
+            0;
 
         if (
             parse_positive(
@@ -647,7 +865,9 @@ int main(int argc, char **argv)
         size_t default_chunk =
             64 * 1024;
 
-        char csvpath[256];
+        char csvpath[
+            256
+        ];
 
         snprintf(
             csvpath,
@@ -656,14 +876,23 @@ int main(int argc, char **argv)
             (size_t)size_mb
         );
 
-        if (
+        int rc =
             run_benchmark_suite(
                 total_bytes,
                 (size_t)trials,
                 default_chunk,
                 csvpath
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "benchmark-suite",
+            csvpath,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -684,9 +913,7 @@ int main(int argc, char **argv)
             "optimize-chunk"
         ) == 0
     ) {
-
         if (argc != 4) {
-
             fprintf(
                 stderr,
                 "Usage: %s optimize-chunk "
@@ -697,8 +924,11 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long size_mb = 0;
-        unsigned long long trials = 0;
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long trials =
+            0;
 
         if (
             parse_positive(
@@ -733,12 +963,34 @@ int main(int argc, char **argv)
             1024ULL *
             1024ULL;
 
-        if (
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/chunk_optimization_%lluMB.csv;"
+            "results/chunk_optimization_summary_%lluMB.csv",
+            size_mb,
+            size_mb
+        );
+
+        int rc =
             run_chunk_optimizer(
                 total_bytes,
                 (size_t)trials
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "chunk-size-optimization",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -759,9 +1011,7 @@ int main(int argc, char **argv)
             "optimize-shm"
         ) == 0
     ) {
-
         if (argc != 5) {
-
             fprintf(
                 stderr,
                 "Usage: %s optimize-shm "
@@ -772,9 +1022,14 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long size_mb = 0;
-        unsigned long long chunk_kb = 0;
-        unsigned long long trials = 0;
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long chunk_kb =
+            0;
+
+        unsigned long long trials =
+            0;
 
         if (
             parse_positive(
@@ -827,13 +1082,40 @@ int main(int argc, char **argv)
             (size_t)chunk_kb *
             1024ULL;
 
-        if (
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/shm_baseline_%lluMB_%lluKB.csv;"
+            "results/shm_opt_%lluMB_%lluKB.csv;"
+            "results/shm_sync_optimization_%lluMB_%lluKB.csv",
+            size_mb,
+            chunk_kb,
+            size_mb,
+            chunk_kb,
+            size_mb,
+            chunk_kb
+        );
+
+        int rc =
             run_shm_optimization(
                 total_bytes,
                 chunk_size,
                 (size_t)trials
-            ) != 0
-        ) {
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "shm-synchronization-optimization",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
 
@@ -854,9 +1136,7 @@ int main(int argc, char **argv)
             "optimize-ring-slots"
         ) == 0
     ) {
-
         if (argc != 5) {
-
             fprintf(
                 stderr,
                 "Usage: %s optimize-ring-slots "
@@ -867,10 +1147,14 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long size_mb = 0;
-        unsigned long long chunk_kb = 0;
-        unsigned long long trials = 0;
+        unsigned long long size_mb =
+            0;
 
+        unsigned long long chunk_kb =
+            0;
+
+        unsigned long long trials =
+            0;
 
         if (
             parse_positive(
@@ -878,7 +1162,6 @@ int main(int argc, char **argv)
                 &size_mb
             ) != 0
         ) {
-
             fprintf(
                 stderr,
                 "Size must be a positive integer.\n"
@@ -887,14 +1170,12 @@ int main(int argc, char **argv)
             return 1;
         }
 
-
         if (
             parse_positive(
                 argv[3],
                 &chunk_kb
             ) != 0
         ) {
-
             fprintf(
                 stderr,
                 "Chunk size must be a positive integer.\n"
@@ -903,14 +1184,12 @@ int main(int argc, char **argv)
             return 1;
         }
 
-
         if (
             parse_positive(
                 argv[4],
                 &trials
             ) != 0
         ) {
-
             fprintf(
                 stderr,
                 "Trials must be a positive integer.\n"
@@ -919,29 +1198,48 @@ int main(int argc, char **argv)
             return 1;
         }
 
-
         size_t total_bytes =
             (size_t)size_mb *
             1024ULL *
             1024ULL;
 
-
         size_t chunk_size =
             (size_t)chunk_kb *
             1024ULL;
 
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
 
-        if (
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/shm_ring_slot_trials_%lluMB_%lluKB.csv;"
+            "results/shm_ring_slot_summary_%lluMB_%lluKB.csv",
+            size_mb,
+            chunk_kb,
+            size_mb,
+            chunk_kb
+        );
+
+        int rc =
             run_shm_ring_slot_optimizer(
                 total_bytes,
                 chunk_size,
                 (size_t)trials
-            ) != 0
-        ) {
+            );
 
+        record_manifest(
+            argc,
+            argv,
+            "shm-ring-slot-optimization",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
             return 2;
         }
-
 
         return 0;
     }
@@ -964,9 +1262,7 @@ int main(int argc, char **argv)
         strcmp(cmd, "shm") == 0 ||
         strcmp(cmd, "shm-opt") == 0
     ) {
-
         if (argc != 4) {
-
             fprintf(
                 stderr,
                 "Usage: %s %s "
@@ -978,8 +1274,11 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        unsigned long long size_mb = 0;
-        unsigned long long chunk_kb = 0;
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long chunk_kb =
+            0;
 
         if (
             parse_positive(
@@ -1018,127 +1317,140 @@ int main(int argc, char **argv)
             (size_t)chunk_kb *
             1024ULL;
 
-        BenchmarkResult result = {0};
+        BenchmarkResult result =
+            {0};
+
+        int rc =
+            -1;
+
+        const char *display_name =
+            NULL;
 
 
         /* ---------------- PIPE ---------------- */
 
-        if (strcmp(cmd, "pipe") == 0) {
+        if (
+            strcmp(
+                cmd,
+                "pipe"
+            ) == 0
+        ) {
+            display_name =
+                "PIPE";
 
-            if (
+            rc =
                 run_pipe_benchmark(
                     total_bytes,
                     chunk_size,
                     &result
-                ) != 0
-            ) {
-                return 2;
-            }
-
-            print_result(
-                "PIPE",
-                total_bytes,
-                &result
-            );
-
-            return 0;
+                );
         }
 
 
         /* ---------------- FIFO ---------------- */
 
-        if (strcmp(cmd, "fifo") == 0) {
+        else if (
+            strcmp(
+                cmd,
+                "fifo"
+            ) == 0
+        ) {
+            display_name =
+                "FIFO";
 
-            if (
+            rc =
                 run_fifo_benchmark(
                     total_bytes,
                     chunk_size,
                     &result
-                ) != 0
-            ) {
-                return 2;
-            }
-
-            print_result(
-                "FIFO",
-                total_bytes,
-                &result
-            );
-
-            return 0;
+                );
         }
 
 
         /* ---------------- SOCKET ---------------- */
 
-        if (strcmp(cmd, "socket") == 0) {
+        else if (
+            strcmp(
+                cmd,
+                "socket"
+            ) == 0
+        ) {
+            display_name =
+                "SOCKET";
 
-            if (
+            rc =
                 run_socket_benchmark(
                     total_bytes,
                     chunk_size,
                     &result
-                ) != 0
-            ) {
-                return 2;
-            }
-
-            print_result(
-                "SOCKET",
-                total_bytes,
-                &result
-            );
-
-            return 0;
+                );
         }
 
 
         /* ---------------- SHM ---------------- */
 
-        if (strcmp(cmd, "shm") == 0) {
+        else if (
+            strcmp(
+                cmd,
+                "shm"
+            ) == 0
+        ) {
+            display_name =
+                "SHM";
 
-            if (
+            rc =
                 run_shm_benchmark(
                     total_bytes,
                     chunk_size,
                     &result
-                ) != 0
-            ) {
-                return 2;
-            }
-
-            print_result(
-                "SHM",
-                total_bytes,
-                &result
-            );
-
-            return 0;
+                );
         }
 
 
         /* ---------------- SHM OPT ---------------- */
 
-        if (strcmp(cmd, "shm-opt") == 0) {
+        else if (
+            strcmp(
+                cmd,
+                "shm-opt"
+            ) == 0
+        ) {
+            display_name =
+                "SHM-OPT";
 
-            if (
+            rc =
                 run_shm_ring_benchmark(
                     total_bytes,
                     chunk_size,
                     &result
-                ) != 0
-            ) {
-                return 2;
-            }
+                );
+        }
 
+
+        if (rc == 0) {
             print_result(
-                "SHM-OPT",
+                display_name,
                 total_bytes,
                 &result
             );
-
-            return 0;
         }
+
+
+        record_manifest(
+            argc,
+            argv,
+            "basic-ipc-benchmark",
+            "Console benchmark output only",
+            rc == 0 ? 0 : 2
+        );
+
+
+        if (rc != 0) {
+            return 2;
+        }
+
+
+        return 0;
     }
 
 
@@ -1152,7 +1464,9 @@ int main(int argc, char **argv)
         cmd
     );
 
-    usage(argv[0]);
+    usage(
+        argv[0]
+    );
 
     return 1;
 }

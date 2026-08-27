@@ -21,7 +21,8 @@ SRC = src/main.c \
       src/integrity_verifier.c \
       src/workload_profiler.c \
       src/shm_ring_slot_optimizer.c \
-      src/environment_profiler.c
+      src/environment_profiler.c \
+      src/run_manifest.c
 
 LDLIBS = -pthread
 
