@@ -1,0 +1,5 @@
+payload_mb,workload_class,selected_method,chunk_kb,median_ms,median_throughput_mbps,system_cpu_ms,voluntary_ctx_switches,profile_source,requested_trials
+1,SMALL,FIFO,4,0.276459,3617.172779,0.354333,3.00,GENERATED,3
+10,MEDIUM,SHM-RING,64,0.892797,10956.601833,0.942000,46.33,GENERATED,3
+100,LARGE,SHM-RING,64,5.609124,17515.551116,4.953400,362.20,REUSED,3
+500,VERY-LARGE,SHM-RING,64,31.428255,16019.300925,20.722333,2069.33,GENERATED,3

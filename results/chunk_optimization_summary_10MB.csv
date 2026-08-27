@@ -1,0 +1,5 @@
+method,baseline_chunk_kb,best_chunk_kb,baseline_median_ms,best_median_ms,latency_improvement_percent,baseline_median_throughput_mbps,best_median_throughput_mbps,throughput_improvement_percent
+PIPE,64,16,3.745641,2.140712,42.847913,2669.770002,4671.342975,74.971738
+FIFO,64,4,5.952475,2.980838,49.922713,1679.973453,3354.761311,99.691329
+SOCKET,64,256,1.384660,0.987366,28.692531,7221.989562,10127.956544,40.237762
+SHM,64,1024,5.125939,1.318483,74.278215,1950.862077,7584.474004,288.775511

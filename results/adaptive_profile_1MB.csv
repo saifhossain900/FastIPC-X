@@ -1,0 +1,5 @@
+method,payload_mb,chunk_kb,median_ms,median_throughput_mbps,system_cpu_ms,voluntary_ctx_switches,selected
+PIPE,1,4,0.294491,3395.689420,0.357000,2.33,0
+FIFO,1,4,0.276459,3617.172779,0.354333,3.00,1
+SOCKET,1,4,0.355194,2815.362853,0.436667,5.33,0
+SHM-RING,1,64,0.312986,3221.232076,0.401333,9.67,0

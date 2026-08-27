@@ -10,6 +10,7 @@
 #include "../include/adaptive_selector.h"
 #include "../include/syscall_profiler.h"
 #include "../include/integrity_verifier.h"
+#include "../include/workload_profiler.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -46,6 +47,12 @@ static void usage(const char *program)
     printf("  %s recommend <size_mb>\n", program);
     printf("  %s auto <size_mb>\n", program);
 
+    printf("\nMulti-Workload Adaptive Analysis:\n");
+    printf(
+        "  %s build-workloads <trials>\n",
+        program
+    );
+
     printf("\nSystem Call Analysis:\n");
     printf(
         "  %s profile <method> <size_mb> <chunk_kb>\n",
@@ -76,6 +83,7 @@ static void usage(const char *program)
     printf("  %s optimize-shm 100 64 5\n", program);
     printf("  %s recommend 100\n", program);
     printf("  %s auto 100\n", program);
+    printf("  %s build-workloads 3\n", program);
     printf("  %s profile pipe 10 64\n", program);
     printf(
         "  %s compare-syscalls shm shm-opt 100 64\n",
@@ -237,6 +245,59 @@ int main(int argc, char **argv)
         if (
             adaptive_auto(
                 total_bytes
+            ) != 0
+        ) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+
+    /* =====================================================
+       MULTI-WORKLOAD ADAPTIVE PROFILER
+
+       Example:
+       ./fastipc build-workloads 3
+       ===================================================== */
+
+    if (
+        strcmp(
+            cmd,
+            "build-workloads"
+        ) == 0
+    ) {
+
+        if (argc != 3) {
+
+            fprintf(
+                stderr,
+                "Usage: %s build-workloads <trials>\n",
+                argv[0]
+            );
+
+            return 1;
+        }
+
+        unsigned long long trials = 0;
+
+        if (
+            parse_positive(
+                argv[2],
+                &trials
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Trials must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        if (
+            run_workload_profiles(
+                (size_t)trials
             ) != 0
         ) {
             return 2;
@@ -538,10 +599,6 @@ int main(int argc, char **argv)
             1024ULL *
             1024ULL;
 
-        /*
-         * Controlled default chunk size
-         * for benchmark suite = 64 KB
-         */
         size_t default_chunk =
             64 * 1024;
 
