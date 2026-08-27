@@ -14,6 +14,7 @@
 #include "../include/shm_ring_slot_optimizer.h"
 #include "../include/environment_profiler.h"
 #include "../include/run_manifest.h"
+#include "../include/cpu_affinity_analyzer.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -56,6 +57,14 @@ static void usage(const char *program)
         program
     );
 
+    printf("\nScheduler / CPU Affinity:\n");
+
+    printf(
+        "  %s analyze-affinity "
+        "<size_mb> <chunk_kb> <trials>\n",
+        program
+    );
+
     printf("\nAdaptive Selection:\n");
     printf("  %s recommend <size_mb>\n", program);
     printf("  %s auto <size_mb>\n", program);
@@ -91,7 +100,9 @@ static void usage(const char *program)
     );
 
     printf("\nReproducibility:\n");
-    printf("  Experiment commands automatically create run manifests.\n");
+    printf(
+        "  Experiment commands automatically create run manifests.\n"
+    );
 
     printf("\nSupported profile methods:\n");
     printf("  pipe fifo socket shm shm-opt\n");
@@ -107,6 +118,11 @@ static void usage(const char *program)
 
     printf(
         "  %s optimize-ring-slots 100 64 5\n",
+        program
+    );
+
+    printf(
+        "  %s analyze-affinity 100 64 5\n",
         program
     );
 
@@ -167,11 +183,7 @@ static int parse_positive(
 
 
 /* =========================================================
-   Manifest helper
-
-   Manifest failure does not invalidate a benchmark that
-   already completed successfully. A warning is printed
-   instead.
+   Run-manifest helper
    ========================================================= */
 
 static void record_manifest(
@@ -217,9 +229,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        ADAPTIVE RECOMMEND
-
-       Example:
-       ./fastipc recommend 100
        ===================================================== */
 
     if (
@@ -294,9 +303,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        ADAPTIVE AUTO
-
-       Example:
-       ./fastipc auto 100
        ===================================================== */
 
     if (
@@ -371,9 +377,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        MULTI-WORKLOAD ADAPTIVE PROFILER
-
-       Example:
-       ./fastipc build-workloads 3
        ===================================================== */
 
     if (
@@ -439,9 +442,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        SYSTEM / ENVIRONMENT PROFILER
-
-       Example:
-       ./fastipc environment
        ===================================================== */
 
     if (
@@ -484,10 +484,129 @@ int main(int argc, char **argv)
 
 
     /* =====================================================
-       SYSTEM CALL PROFILE
+       CPU AFFINITY / SCHEDULER ANALYSIS
 
        Example:
-       ./fastipc profile pipe 10 64
+       ./fastipc analyze-affinity 100 64 5
+       ===================================================== */
+
+    if (
+        strcmp(
+            cmd,
+            "analyze-affinity"
+        ) == 0
+    ) {
+        if (argc != 5) {
+            fprintf(
+                stderr,
+                "Usage: %s analyze-affinity "
+                "<size_mb> <chunk_kb> <trials>\n",
+                argv[0]
+            );
+
+            return 1;
+        }
+
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long chunk_kb =
+            0;
+
+        unsigned long long trials =
+            0;
+
+        if (
+            parse_positive(
+                argv[2],
+                &size_mb
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        if (
+            parse_positive(
+                argv[3],
+                &chunk_kb
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Chunk size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        if (
+            parse_positive(
+                argv[4],
+                &trials
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Trials must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        size_t total_bytes =
+            (size_t)size_mb *
+            1024ULL *
+            1024ULL;
+
+        size_t chunk_size =
+            (size_t)chunk_kb *
+            1024ULL;
+
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/cpu_affinity_trials_%lluMB_%lluKB.csv;"
+            "results/cpu_affinity_summary_%lluMB_%lluKB.csv",
+            size_mb,
+            chunk_kb,
+            size_mb,
+            chunk_kb
+        );
+
+        int rc =
+            run_cpu_affinity_analysis(
+                total_bytes,
+                chunk_size,
+                (size_t)trials
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "cpu-affinity-analysis",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+
+    /* =====================================================
+       SYSTEM CALL PROFILE
        ===================================================== */
 
     if (
@@ -587,9 +706,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        SYSTEM CALL COMPARISON
-
-       Example:
-       ./fastipc compare-syscalls shm shm-opt 100 64
        ===================================================== */
 
     if (
@@ -604,14 +720,6 @@ int main(int argc, char **argv)
                 "Usage: %s compare-syscalls "
                 "<baseline> <optimized> "
                 "<size_mb> <chunk_kb>\n",
-                argv[0]
-            );
-
-            fprintf(
-                stderr,
-                "Example:\n"
-                "  %s compare-syscalls "
-                "shm shm-opt 100 64\n",
                 argv[0]
             );
 
@@ -699,9 +807,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        DATA INTEGRITY VERIFICATION
-
-       Example:
-       ./fastipc verify shm-opt 100 64
        ===================================================== */
 
     if (
@@ -716,11 +821,6 @@ int main(int argc, char **argv)
                 "Usage: %s verify "
                 "<method> <size_mb> <chunk_kb>\n",
                 argv[0]
-            );
-
-            fprintf(
-                stderr,
-                "Methods: pipe fifo socket shm shm-opt\n"
             );
 
             return 1;
@@ -801,9 +901,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        BENCHMARK SUITE
-
-       Example:
-       ./fastipc benchmark 100 5
        ===================================================== */
 
     if (
@@ -863,7 +960,8 @@ int main(int argc, char **argv)
             1024ULL;
 
         size_t default_chunk =
-            64 * 1024;
+            64 *
+            1024;
 
         char csvpath[
             256
@@ -902,9 +1000,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        CHUNK SIZE OPTIMIZER
-
-       Example:
-       ./fastipc optimize-chunk 100 5
        ===================================================== */
 
     if (
@@ -1000,9 +1095,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        SHM SYNCHRONIZATION OPTIMIZER
-
-       Example:
-       ./fastipc optimize-shm 100 64 5
        ===================================================== */
 
     if (
@@ -1125,9 +1217,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        SHM RING SLOT OPTIMIZER
-
-       Example:
-       ./fastipc optimize-ring-slots 100 64 5
        ===================================================== */
 
     if (
@@ -1247,12 +1336,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        STANDARD IPC COMMANDS
-
-       pipe
-       fifo
-       socket
-       shm
-       shm-opt
        ===================================================== */
 
     if (
@@ -1327,8 +1410,6 @@ int main(int argc, char **argv)
             NULL;
 
 
-        /* ---------------- PIPE ---------------- */
-
         if (
             strcmp(
                 cmd,
@@ -1345,10 +1426,6 @@ int main(int argc, char **argv)
                     &result
                 );
         }
-
-
-        /* ---------------- FIFO ---------------- */
-
         else if (
             strcmp(
                 cmd,
@@ -1365,10 +1442,6 @@ int main(int argc, char **argv)
                     &result
                 );
         }
-
-
-        /* ---------------- SOCKET ---------------- */
-
         else if (
             strcmp(
                 cmd,
@@ -1385,10 +1458,6 @@ int main(int argc, char **argv)
                     &result
                 );
         }
-
-
-        /* ---------------- SHM ---------------- */
-
         else if (
             strcmp(
                 cmd,
@@ -1405,10 +1474,6 @@ int main(int argc, char **argv)
                     &result
                 );
         }
-
-
-        /* ---------------- SHM OPT ---------------- */
-
         else if (
             strcmp(
                 cmd,
@@ -1427,7 +1492,10 @@ int main(int argc, char **argv)
         }
 
 
-        if (rc == 0) {
+        if (
+            rc == 0 &&
+            display_name != NULL
+        ) {
             print_result(
                 display_name,
                 total_bytes,
