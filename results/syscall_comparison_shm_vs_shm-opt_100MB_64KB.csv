@@ -1,0 +1,5 @@
+metric,baseline,optimized,reduction_percent
+total_syscalls,3299,2589,21.521673
+total_errors,1559,295,81.077614
+futex_calls,3238,2528,21.927116
+futex_errors,1558,294,81.129653
