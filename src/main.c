@@ -16,6 +16,7 @@
 #include "../include/run_manifest.h"
 #include "../include/cpu_affinity_analyzer.h"
 #include "../include/memory_optimizer.h"
+#include "../include/final_summary.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -108,6 +109,9 @@ static void usage(const char *program)
         program
     );
 
+    printf("\nFinal Results / Reporting:\n");
+    printf("  %s final-summary\n", program);
+
     printf("\nReproducibility:\n");
 
     printf(
@@ -154,6 +158,11 @@ static void usage(const char *program)
 
     printf(
         "  %s verify shm-opt 100 64\n",
+        program
+    );
+
+    printf(
+        "  %s final-summary\n",
         program
     );
 
@@ -240,6 +249,49 @@ int main(int argc, char **argv)
 
     const char *cmd =
         argv[1];
+
+
+    /* =====================================================
+       FINAL RESULTS SUMMARY
+       ===================================================== */
+
+    if (
+        strcmp(
+            cmd,
+            "final-summary"
+        ) == 0
+    ) {
+        if (argc != 2) {
+            fprintf(
+                stderr,
+                "Usage: %s final-summary\n",
+                argv[0]
+            );
+
+            return 1;
+        }
+
+        const char *result_files =
+            "results/final_summary.txt;"
+            "results/final_summary.csv";
+
+        int rc =
+            run_final_summary();
+
+        record_manifest(
+            argc,
+            argv,
+            "final-results-summary",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
+            return 2;
+        }
+
+        return 0;
+    }
 
 
     /* =====================================================
@@ -500,9 +552,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        CPU AFFINITY / SCHEDULER ANALYSIS
-
-       Example:
-       ./fastipc analyze-affinity 100 64 5
        ===================================================== */
 
     if (
@@ -622,9 +671,6 @@ int main(int argc, char **argv)
 
     /* =====================================================
        VIRTUAL MEMORY / PAGE-FAULT OPTIMIZATION
-
-       Example:
-       ./fastipc optimize-memory 100 64 5
        ===================================================== */
 
     if (

@@ -24,7 +24,8 @@ SRC = src/main.c \
       src/environment_profiler.c \
       src/run_manifest.c \
       src/cpu_affinity_analyzer.c \
-      src/memory_optimizer.c
+      src/memory_optimizer.c \
+      src/final_summary.c
 
 LDLIBS = -pthread
 
