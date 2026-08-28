@@ -15,6 +15,7 @@
 #include "../include/environment_profiler.h"
 #include "../include/run_manifest.h"
 #include "../include/cpu_affinity_analyzer.h"
+#include "../include/memory_optimizer.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -65,6 +66,14 @@ static void usage(const char *program)
         program
     );
 
+    printf("\nVirtual Memory / Paging:\n");
+
+    printf(
+        "  %s optimize-memory "
+        "<size_mb> <chunk_kb> <trials>\n",
+        program
+    );
+
     printf("\nAdaptive Selection:\n");
     printf("  %s recommend <size_mb>\n", program);
     printf("  %s auto <size_mb>\n", program);
@@ -100,6 +109,7 @@ static void usage(const char *program)
     );
 
     printf("\nReproducibility:\n");
+
     printf(
         "  Experiment commands automatically create run manifests.\n"
     );
@@ -123,6 +133,11 @@ static void usage(const char *program)
 
     printf(
         "  %s analyze-affinity 100 64 5\n",
+        program
+    );
+
+    printf(
+        "  %s optimize-memory 100 64 5\n",
         program
     );
 
@@ -593,6 +608,128 @@ int main(int argc, char **argv)
             argc,
             argv,
             "cpu-affinity-analysis",
+            result_files,
+            rc == 0 ? 0 : 2
+        );
+
+        if (rc != 0) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+
+    /* =====================================================
+       VIRTUAL MEMORY / PAGE-FAULT OPTIMIZATION
+
+       Example:
+       ./fastipc optimize-memory 100 64 5
+       ===================================================== */
+
+    if (
+        strcmp(
+            cmd,
+            "optimize-memory"
+        ) == 0
+    ) {
+        if (argc != 5) {
+            fprintf(
+                stderr,
+                "Usage: %s optimize-memory "
+                "<size_mb> <chunk_kb> <trials>\n",
+                argv[0]
+            );
+
+            return 1;
+        }
+
+        unsigned long long size_mb =
+            0;
+
+        unsigned long long chunk_kb =
+            0;
+
+        unsigned long long trials =
+            0;
+
+        if (
+            parse_positive(
+                argv[2],
+                &size_mb
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        if (
+            parse_positive(
+                argv[3],
+                &chunk_kb
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Chunk size must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        if (
+            parse_positive(
+                argv[4],
+                &trials
+            ) != 0
+        ) {
+            fprintf(
+                stderr,
+                "Trials must be a positive integer.\n"
+            );
+
+            return 1;
+        }
+
+        size_t total_bytes =
+            (size_t)size_mb *
+            1024ULL *
+            1024ULL;
+
+        size_t chunk_size =
+            (size_t)chunk_kb *
+            1024ULL;
+
+        char result_files[
+            RESULT_PATH_BUFFER
+        ];
+
+        snprintf(
+            result_files,
+            sizeof(result_files),
+            "results/memory_trials_%lluMB_%lluKB.csv;"
+            "results/memory_summary_%lluMB_%lluKB.csv",
+            size_mb,
+            chunk_kb,
+            size_mb,
+            chunk_kb
+        );
+
+        int rc =
+            run_memory_optimizer(
+                total_bytes,
+                chunk_size,
+                (size_t)trials
+            );
+
+        record_manifest(
+            argc,
+            argv,
+            "virtual-memory-page-fault-analysis",
             result_files,
             rc == 0 ? 0 : 2
         );
@@ -1426,6 +1563,7 @@ int main(int argc, char **argv)
                     &result
                 );
         }
+
         else if (
             strcmp(
                 cmd,
@@ -1442,6 +1580,7 @@ int main(int argc, char **argv)
                     &result
                 );
         }
+
         else if (
             strcmp(
                 cmd,
@@ -1458,6 +1597,7 @@ int main(int argc, char **argv)
                     &result
                 );
         }
+
         else if (
             strcmp(
                 cmd,
@@ -1474,6 +1614,7 @@ int main(int argc, char **argv)
                     &result
                 );
         }
+
         else if (
             strcmp(
                 cmd,

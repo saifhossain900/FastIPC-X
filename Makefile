@@ -23,7 +23,8 @@ SRC = src/main.c \
       src/shm_ring_slot_optimizer.c \
       src/environment_profiler.c \
       src/run_manifest.c \
-      src/cpu_affinity_analyzer.c
+      src/cpu_affinity_analyzer.c \
+      src/memory_optimizer.c
 
 LDLIBS = -pthread
 
