@@ -1,0 +1,2 @@
+run_id,timestamp,category,command,command_exit_code,command_status,git_commit,git_branch,source_tree_state,environment_profile,result_files
+"20260828_143005_239775","2026-08-28 14:30:05 +0600","final-results-summary","./fastipc final-summary",0,"SUCCESS","adc7adf18a82f2659f29fdf2c7fd556a46b4da3c","main","CLEAN","results/system_environment.txt","results/final_summary.txt;results/final_summary.csv"

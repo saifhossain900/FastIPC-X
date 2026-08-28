@@ -1,0 +1,23 @@
+FASTIPC-X EXPERIMENT RUN MANIFEST
+============================================================
+
+Run ID                 : 20260828_143005_239775
+Timestamp              : 2026-08-28 14:30:05 +0600
+Category               : final-results-summary
+Command                : ./fastipc final-summary
+Command exit code      : 0
+Command status         : SUCCESS
+
+Git / Source Revision
+------------------------------------------------------------
+Git commit             : adc7adf18a82f2659f29fdf2c7fd556a46b4da3c
+Git branch             : main
+Source-tree state      : CLEAN
+
+Environment
+------------------------------------------------------------
+Environment profile    : results/system_environment.txt
+
+Experimental Output
+------------------------------------------------------------
+Result files           : results/final_summary.txt;results/final_summary.csv

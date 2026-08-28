@@ -1,0 +1,131 @@
+FASTIPC-X FINAL EXPERIMENT SUMMARY
+============================================================
+
+Generated              : 2026-08-28 14:30:05 +0600
+Source                 : existing FastIPC-X result CSVs
+Primary policy         : derive results; do not hardcode metrics
+
+Baseline IPC Comparison
+------------------------------------------------------------
+PIPE median latency             : 44.293126 ms
+PIPE median throughput          : 2257.686667 MB/s
+FIFO median latency             : 49.855335 ms
+FIFO median throughput          : 2005.803391 MB/s
+SOCKET median latency           : 9.895822 ms  [lowest baseline latency]
+SOCKET median throughput        : 10105.274731 MB/s
+SHM median latency              : 53.883599 ms
+SHM median throughput           : 1855.852279 MB/s
+Baseline latency winner         : SOCKET  [100 MB, 64 KB baseline experiment]
+
+Chunk-Size Optimization
+------------------------------------------------------------
+PIPE best chunk                 : 16 KB
+PIPE latency improvement        : 55.680507 %
+PIPE throughput improvement     : 125.634351 %
+FIFO best chunk                 : 16 KB
+FIFO latency improvement        : 43.523816 %
+FIFO throughput improvement     : 77.065787 %
+SOCKET best chunk               : 256 KB
+SOCKET latency improvement      : 8.105553 %
+SOCKET throughput improvement   : 8.820503 %
+SHM best chunk                  : 1024 KB
+SHM latency improvement         : 82.833448 %
+SHM throughput improvement      : 482.528146 %
+
+SHM Synchronization Optimization
+------------------------------------------------------------
+Baseline median latency         : 45.752234 ms
+SHM-RING median latency         : 5.635034 ms
+Latency reduction               : 87.683587 %
+Throughput improvement          : 723.734577 %
+System CPU reduction            : 95.074303 %
+Voluntary context-switch reduction : 88.686983 %
+
+System-Call Reduction
+------------------------------------------------------------
+total_syscalls                  : 3299 -> 2589  [21.521673% reduction]
+total_errors                    : 1559 -> 295  [81.077614% reduction]
+futex_calls                     : 3238 -> 2528  [21.927116% reduction]
+futex_errors                    : 1558 -> 294  [81.129653% reduction]
+
+Adaptive Workload Selection
+------------------------------------------------------------
+1 MB workload                   : FIFO / 4 KB  [SMALL, median 0.276459 ms, 3617.172779 MB/s]
+10 MB workload                  : SHM-RING / 64 KB  [MEDIUM, median 0.892797 ms, 10956.601833 MB/s]
+100 MB workload                 : SHM-RING / 64 KB  [LARGE, median 5.609124 ms, 17515.551116 MB/s]
+500 MB workload                 : SHM-RING / 64 KB  [VERY-LARGE, median 31.428255 ms, 16019.300925 MB/s]
+
+Data Integrity
+------------------------------------------------------------
+FIFO 10 MB / 64 KB              : PASS  [sent=10485760 received=10485760 checksum=0xeb0d3fb8b7e22325]
+PIPE 10 MB / 64 KB              : PASS  [sent=10485760 received=10485760 checksum=0xeb0d3fb8b7e22325]
+SHM-RING 100 MB / 64 KB         : PASS  [sent=104857600 received=104857600 checksum=0x4db2d92e89a22325]
+SHM-RING 10 MB / 64 KB          : PASS  [sent=10485760 received=10485760 checksum=0xeb0d3fb8b7e22325]
+SHM 10 MB / 64 KB               : PASS  [sent=10485760 received=10485760 checksum=0xeb0d3fb8b7e22325]
+SOCKET 10 MB / 64 KB            : PASS  [sent=10485760 received=10485760 checksum=0xeb0d3fb8b7e22325]
+Verification passes             : 6/6  [all recorded integrity tests passed]
+
+SHM Ring Slot Sweep
+------------------------------------------------------------
+Controlled sweep candidate      : 16 slots  [microbenchmark candidate only]
+Candidate median latency        : 3.849173 ms
+Candidate median throughput     : 25979.606528 MB/s
+Interpretation                  : CONTROLLED MICROBENCHMARK  [do not equate slot-sweep selection with automatic production adoption]
+
+CPU Affinity / Scheduler Analysis
+------------------------------------------------------------
+Best measured mode              : SAME-CPU  [experimental candidate]
+Selected median latency         : 4.825617 ms
+Selected median throughput      : 20722.738665 MB/s
+Latency reduction vs unpinned   : 21.803691 %
+Throughput improvement vs unpinned : 27.883274 %
+Selected voluntary context switches : 1566.400000 switches
+Selected involuntary context switches : 1553.600000 switches
+Production interpretation       : EXPERIMENTAL  [affinity result is hardware, kernel, topology and workload dependent]
+
+Virtual Memory / Page Faults
+------------------------------------------------------------
+Critical-path winner            : PREFAULT
+Critical-path latency           : 9.150168 ms
+Critical-path reduction vs demand : 81.875598 %
+Demand timed minor faults       : 25600.000000 faults
+Critical winner setup minor faults : 25600.000000 faults
+Critical winner timed minor faults : 0.000000 faults  [fault work may have shifted into setup]
+Strategy-total winner           : MADVISE-WILLNEED  [measured total of strategy setup + timed workload]
+Strategy-total latency          : 44.106901 ms
+Strategy-total reduction vs demand : 12.634468 %  [measured result, not proof of page pre-population]
+MADV_WILLNEED fault behavior    : NO MATERIAL PREFAULTING OBSERVED  [timed minor-fault count remained approximately equal to DEMAND]
+Demand major faults             : 0.000000 faults
+
+Experimental Environment
+------------------------------------------------------------
+Operating system                : Ubuntu 26.04 LTS
+Kernel                          : 6.18.33.2-microsoft-standard-WSL2
+Architecture                    : x86_64
+WSL detected                    : YES
+CPU                             : 12th Gen Intel(R) Core(TM) i5-12500H
+Logical CPUs                    : 16
+Page size                       : 4096 bytes
+Compiler                        : GCC 15.2.0
+C standard                      : C11
+Optimization                    : Enabled  [-O2 -Wall -Wextra -Wpedantic -std=c11 -D_POSIX_C_SOURCE=200809L -pthread]
+
+Reproducibility Evidence
+------------------------------------------------------------
+TXT manifests available         : 2 manifests
+CLEAN manifests available       : 2 manifests
+Manifest policy                 : ENABLED  [important experiments record command, commit, branch, source state and result files]
+Manifest count timing           : AT SUMMARY GENERATION  [this final-summary command's own manifest is recorded after the summary is generated]
+
+Scientific Interpretation Notes
+------------------------------------------------------------
+Baseline vs optimized results   : SEPARATE EXPERIMENTS  [do not mix conditions when claiming speedups]
+strace timing                   : NOT PRIMARY PERFORMANCE EVIDENCE  [system-call tracing changes wall-clock behavior]
+Ring-slot sweep                 : CONTROLLED MICROBENCHMARK  [candidate selection is not automatic production adoption]
+CPU affinity                    : EXPERIMENTAL  [scheduler placement may change across hardware, kernels and workloads]
+Pre-faulting                    : WORK SHIFT  [page-fault work can move from the timed critical path into setup]
+MADV_WILLNEED                   : KERNEL HINT  [a successful call does not guarantee page pre-population]
+
+Summary Generation Status
+------------------------------------------------------------
+Status                          : COMPLETE  [all expected result sections were found]
