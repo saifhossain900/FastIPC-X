@@ -25,6 +25,7 @@ import {
   TerminalSquare,
   Timer,
   TrendingUp,
+  Trophy,
   X,
   Zap,
 } from "lucide-react";
@@ -57,6 +58,7 @@ const NAV_ITEMS = [
   { id: "scheduler", label: "CPU Scheduler", icon: Cpu },
   { id: "memory", label: "Virtual Memory", icon: MemoryStick },
   { id: "integrity", label: "Integrity", icon: ShieldCheck },
+  { id: "final", label: "Final Results", icon: Trophy },
   { id: "evidence", label: "Evidence", icon: GitBranch },
 ];
 
@@ -1174,6 +1176,606 @@ function IntegrityPage({ data, onRun, running }) {
 }
 
 
+
+function FinalResultsPage({ data }) {
+  const rows = data.final_summary || [];
+
+  function getMetric(section, metric) {
+    return rows.find(
+      (row) =>
+        row.section === section &&
+        row.metric === metric
+    );
+  }
+
+  function metricValue(section, metric, fallback = "—") {
+    const row = getMetric(section, metric);
+
+    if (!row) {
+      return fallback;
+    }
+
+    return row.unit
+      ? `${row.value} ${row.unit}`
+      : row.value;
+  }
+
+  function metricNumber(section, metric) {
+    const row = getMetric(section, metric);
+
+    if (!row) {
+      return 0;
+    }
+
+    const parsed = Number(row.value);
+
+    return Number.isFinite(parsed)
+      ? parsed
+      : 0;
+  }
+
+  function reductionFromNote(section, metric) {
+    const row = getMetric(section, metric);
+
+    if (!row?.note) {
+      return "—";
+    }
+
+    const match = row.note.match(
+      /([0-9.]+)%/
+    );
+
+    return match
+      ? `${number(match[1])}%`
+      : row.note;
+  }
+
+  function parseArrow(section, metric) {
+    const row = getMetric(section, metric);
+
+    if (!row?.value) {
+      return {
+        baseline: 0,
+        optimized: 0,
+      };
+    }
+
+    const parts = row.value.split("->");
+
+    return {
+      baseline: Number(parts[0]?.trim()) || 0,
+      optimized: Number(parts[1]?.trim()) || 0,
+    };
+  }
+
+  const baselineWinner = metricValue(
+    "Baseline IPC Comparison",
+    "Baseline latency winner"
+  );
+
+  const shmLatencyReduction = metricNumber(
+    "SHM Synchronization Optimization",
+    "Latency reduction"
+  );
+
+  const throughputImprovement = metricNumber(
+    "SHM Synchronization Optimization",
+    "Throughput improvement"
+  );
+
+  const systemCpuReduction = metricNumber(
+    "SHM Synchronization Optimization",
+    "System CPU reduction"
+  );
+
+  const contextSwitchReduction = metricNumber(
+    "SHM Synchronization Optimization",
+    "Voluntary context-switch reduction"
+  );
+
+  const affinityReduction = metricNumber(
+    "CPU Affinity / Scheduler Analysis",
+    "Latency reduction vs unpinned"
+  );
+
+  const prefaultReduction = metricNumber(
+    "Virtual Memory / Page Faults",
+    "Critical-path reduction vs demand"
+  );
+
+  const integrityPasses = metricValue(
+    "Data Integrity",
+    "Verification passes"
+  );
+
+  const baselineLatency = metricNumber(
+    "SHM Synchronization Optimization",
+    "Baseline median latency"
+  );
+
+  const ringLatency = metricNumber(
+    "SHM Synchronization Optimization",
+    "SHM-RING median latency"
+  );
+
+  const syscallTotal = parseArrow(
+    "System-Call Reduction",
+    "total_syscalls"
+  );
+
+  const futexTotal = parseArrow(
+    "System-Call Reduction",
+    "futex_calls"
+  );
+
+  const demandFaults = metricNumber(
+    "Virtual Memory / Page Faults",
+    "Demand timed minor faults"
+  );
+
+  const prefaultSetupFaults = metricNumber(
+    "Virtual Memory / Page Faults",
+    "Critical winner setup minor faults"
+  );
+
+  const prefaultTimedFaults = metricNumber(
+    "Virtual Memory / Page Faults",
+    "Critical winner timed minor faults"
+  );
+
+  const scientificNotes = rows.filter(
+    (row) =>
+      row.section === "Scientific Interpretation Notes"
+  );
+
+  const latencyData = [
+    {
+      mode: "Baseline SHM",
+      latency: baselineLatency,
+    },
+    {
+      mode: "SHM-RING",
+      latency: ringLatency,
+    },
+  ];
+
+  const impactData = [
+    {
+      metric: "Latency",
+      improvement: shmLatencyReduction,
+    },
+    {
+      metric: "Throughput",
+      improvement: throughputImprovement,
+    },
+    {
+      metric: "System CPU",
+      improvement: systemCpuReduction,
+    },
+    {
+      metric: "Ctx Switches",
+      improvement: contextSwitchReduction,
+    },
+  ];
+
+  const syscallData = [
+    {
+      metric: "Total syscalls",
+      baseline: syscallTotal.baseline,
+      optimized: syscallTotal.optimized,
+    },
+    {
+      metric: "Futex calls",
+      baseline: futexTotal.baseline,
+      optimized: futexTotal.optimized,
+    },
+  ];
+
+  const pageFaultData = [
+    {
+      phase: "Demand / timed",
+      faults: demandFaults,
+    },
+    {
+      phase: "Pre-fault / setup",
+      faults: prefaultSetupFaults,
+    },
+    {
+      phase: "Pre-fault / timed",
+      faults: prefaultTimedFaults,
+    },
+  ];
+
+  return (
+    <>
+      <section className="final-hero">
+        <div className="final-hero-content">
+          <div className="eyebrow">
+            <Trophy size={13} />
+            AUTHORITATIVE PROJECT EVIDENCE
+          </div>
+
+          <h1>
+            FastIPC-X
+            <span> Final Results</span>
+          </h1>
+
+          <p>
+            Consolidated results generated from the committed
+            experimental evidence. Values on this page are loaded
+            from the native FastIPC-X final summary.
+          </p>
+
+          <div className="final-hero-badges">
+            <Badge type="success">
+              Evidence Complete
+            </Badge>
+
+            <Badge type="accent">
+              Native C Backend
+            </Badge>
+
+            <Badge type="neutral">
+              Median-Based Results
+            </Badge>
+          </div>
+        </div>
+
+        <div className="final-score-card">
+          <span>Production optimization</span>
+          <strong>
+            {number(shmLatencyReduction)}%
+          </strong>
+          <p>lower SHM latency</p>
+        </div>
+      </section>
+
+      <div className="final-kpi-grid">
+        <StatCard
+          icon={Gauge}
+          label="Baseline Winner"
+          value={baselineWinner}
+          note="100 MB / 64 KB baseline comparison"
+        />
+
+        <StatCard
+          icon={Zap}
+          label="SHM-RING Latency Reduction"
+          value={`${number(shmLatencyReduction)}%`}
+          note={`${number(baselineLatency, 3)} → ${number(ringLatency, 3)} ms`}
+          tone="accent"
+        />
+
+        <StatCard
+          icon={TrendingUp}
+          label="Throughput Improvement"
+          value={`${number(throughputImprovement)}%`}
+          note="Production SHM synchronization optimization"
+        />
+
+        <StatCard
+          icon={Cpu}
+          label="System CPU Reduction"
+          value={`${number(systemCpuReduction)}%`}
+          note="Baseline SHM vs SHM-RING"
+        />
+
+        <StatCard
+          icon={Activity}
+          label="Context-Switch Reduction"
+          value={`${number(contextSwitchReduction)}%`}
+          note="Voluntary context switches"
+        />
+
+        <StatCard
+          icon={Binary}
+          label="Total Syscall Reduction"
+          value={reductionFromNote(
+            "System-Call Reduction",
+            "total_syscalls"
+          )}
+          note={`${syscallTotal.baseline} → ${syscallTotal.optimized} calls`}
+        />
+
+        <StatCard
+          icon={MemoryStick}
+          label="Pre-fault Critical Path"
+          value={`${number(prefaultReduction)}%`}
+          note="Timed-path latency reduction vs demand"
+        />
+
+        <StatCard
+          icon={ShieldCheck}
+          label="Integrity Verification"
+          value={`${integrityPasses} PASS`}
+          note="All recorded checksum tests"
+          tone="success"
+        />
+      </div>
+
+      <div className="two-column">
+        <Panel
+          title="Production SHM Optimization"
+          subtitle="Lower latency is better"
+          action={
+            <Badge type="success">
+              Production evidence
+            </Badge>
+          }
+        >
+          <div className="chart-box">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <BarChart data={latencyData}>
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 3"
+                />
+
+                <XAxis dataKey="mode" />
+                <YAxis />
+
+                <Tooltip
+                  content={<ChartTooltip />}
+                />
+
+                <Bar
+                  dataKey="latency"
+                  name="Median latency (ms)"
+                  fill="var(--chart-a)"
+                  radius={[7, 7, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel
+          title="Optimization Impact"
+          subtitle="Measured percentage changes"
+        >
+          <div className="chart-box">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <BarChart
+                data={impactData}
+                layout="vertical"
+              >
+                <CartesianGrid
+                  horizontal={false}
+                  strokeDasharray="3 3"
+                />
+
+                <XAxis type="number" />
+                <YAxis
+                  dataKey="metric"
+                  type="category"
+                  width={82}
+                />
+
+                <Tooltip
+                  content={<ChartTooltip />}
+                />
+
+                <Bar
+                  dataKey="improvement"
+                  name="Improvement (%)"
+                  fill="var(--chart-b)"
+                  radius={[0, 7, 7, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="two-column">
+        <Panel
+          title="Kernel Interaction Reduction"
+          subtitle="System-call evidence under tracing"
+          action={
+            <Badge type="warning">
+              Behavioral evidence
+            </Badge>
+          }
+        >
+          <div className="chart-box">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <BarChart data={syscallData}>
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 3"
+                />
+
+                <XAxis dataKey="metric" />
+                <YAxis />
+
+                <Tooltip
+                  content={<ChartTooltip />}
+                />
+
+                <Legend />
+
+                <Bar
+                  dataKey="baseline"
+                  name="Baseline"
+                  fill="var(--chart-muted)"
+                  radius={[5, 5, 0, 0]}
+                />
+
+                <Bar
+                  dataKey="optimized"
+                  name="Optimized"
+                  fill="var(--chart-a)"
+                  radius={[5, 5, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        <Panel
+          title="Page-Fault Placement"
+          subtitle="Pre-faulting moves first-touch work outside the critical path"
+          action={
+            <Badge type="warning">
+              Work shift
+            </Badge>
+          }
+        >
+          <div className="chart-box">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+              <BarChart data={pageFaultData}>
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 3"
+                />
+
+                <XAxis dataKey="phase" />
+                <YAxis />
+
+                <Tooltip
+                  content={<ChartTooltip />}
+                />
+
+                <Bar
+                  dataKey="faults"
+                  name="Minor faults"
+                  fill="var(--chart-c)"
+                  radius={[6, 6, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+      </div>
+
+      <div className="final-evidence-grid">
+        <div className="final-evidence-card">
+          <div className="final-evidence-icon">
+            <Cpu size={21} />
+          </div>
+
+          <span>Scheduler Experiment</span>
+
+          <strong>
+            {number(affinityReduction)}%
+          </strong>
+
+          <p>
+            Same-CPU placement reduced measured latency
+            versus the unpinned run on this test system.
+          </p>
+
+          <Badge type="warning">
+            System specific
+          </Badge>
+        </div>
+
+        <div className="final-evidence-card">
+          <div className="final-evidence-icon">
+            <MemoryStick size={21} />
+          </div>
+
+          <span>Critical-Path Paging</span>
+
+          <strong>
+            {number(prefaultReduction)}%
+          </strong>
+
+          <p>
+            Pre-faulting moved the recorded minor faults
+            from the timed path into setup.
+          </p>
+
+          <Badge type="warning">
+            Work moved, not removed
+          </Badge>
+        </div>
+
+        <div className="final-evidence-card">
+          <div className="final-evidence-icon">
+            <ShieldCheck size={21} />
+          </div>
+
+          <span>Correctness</span>
+
+          <strong>
+            {integrityPasses}
+          </strong>
+
+          <p>
+            Recorded data-integrity runs completed with
+            matching sender and receiver checksums.
+          </p>
+
+          <Badge type="success">
+            Verified
+          </Badge>
+        </div>
+      </div>
+
+      <Panel
+        title="Scientific Interpretation"
+        subtitle="Important boundaries on the conclusions"
+      >
+        <div className="final-notes">
+          {scientificNotes.map((row) => (
+            <div
+              className="final-note"
+              key={row.metric}
+            >
+              <div className="final-note-marker" />
+
+              <div>
+                <strong>{row.metric}</strong>
+
+                <span>{row.value}</span>
+
+                {row.note && (
+                  <p>{row.note}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      <div className="final-verdict">
+        <div className="final-verdict-icon">
+          <CheckCircle2 size={26} />
+        </div>
+
+        <div>
+          <span>FASTIPC-X FINAL STATUS</span>
+
+          <h3>
+            Optimization validated with performance,
+            kernel-behavior and correctness evidence.
+          </h3>
+
+          <p>
+            The production SHM-RING result is kept separate
+            from controlled scheduler, ring-depth and
+            virtual-memory experiments.
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+
 function EvidencePage({ data }) {
   const env = data.environment || {};
 
@@ -1493,6 +2095,9 @@ function App() {
             running={running}
           />
         );
+
+      case "final":
+        return <FinalResultsPage data={data} />;
 
       case "evidence":
         return <EvidencePage data={data} />;
