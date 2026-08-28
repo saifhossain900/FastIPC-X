@@ -1,0 +1,2 @@
+run_id,timestamp,category,command,command_exit_code,command_status,git_commit,git_branch,source_tree_state,environment_profile,result_files
+"20260828_121309_226787","2026-08-28 12:13:09 +0600","virtual-memory-page-fault-analysis","./fastipc optimize-memory 100 64 5",0,"SUCCESS","35d61f0b12c54e13c11fc749482806889a5638cb","main","CLEAN","results/system_environment.txt","results/memory_trials_100MB_64KB.csv;results/memory_summary_100MB_64KB.csv"

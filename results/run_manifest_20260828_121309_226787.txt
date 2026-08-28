@@ -1,0 +1,23 @@
+FASTIPC-X EXPERIMENT RUN MANIFEST
+============================================================
+
+Run ID                 : 20260828_121309_226787
+Timestamp              : 2026-08-28 12:13:09 +0600
+Category               : virtual-memory-page-fault-analysis
+Command                : ./fastipc optimize-memory 100 64 5
+Command exit code      : 0
+Command status         : SUCCESS
+
+Git / Source Revision
+------------------------------------------------------------
+Git commit             : 35d61f0b12c54e13c11fc749482806889a5638cb
+Git branch             : main
+Source-tree state      : CLEAN
+
+Environment
+------------------------------------------------------------
+Environment profile    : results/system_environment.txt
+
+Experimental Output
+------------------------------------------------------------
+Result files           : results/memory_trials_100MB_64KB.csv;results/memory_summary_100MB_64KB.csv

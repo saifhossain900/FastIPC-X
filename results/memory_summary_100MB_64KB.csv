@@ -1,0 +1,4 @@
+mode,median_setup_ms,median_timed_ms,median_total_ms,median_throughput_mbps,average_setup_minor_faults,average_timed_minor_faults,average_setup_major_faults,average_timed_major_faults,average_timed_system_ms,average_timed_voluntary_ctx_switches,average_timed_involuntary_ctx_switches,selected_critical_path,selected_strategy_total
+DEMAND,0.000110,50.485352,50.485472,1980.772561,0.00,25600.00,0.00,0.00,43.881400,0.00,3.20,0,0
+PREFAULT,43.208768,9.150168,52.202222,10928.761087,25600.00,0.00,0.00,0.00,0.866400,0.00,0.00,1,0
+MADVISE-WILLNEED,0.003106,44.103775,44.106901,2267.379605,0.00,25600.00,0.00,0.00,42.182000,0.00,1.20,0,1
