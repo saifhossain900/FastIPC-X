@@ -58,6 +58,7 @@ const NAV_ITEMS = [
   { id: "scheduler", label: "CPU Scheduler", icon: Cpu },
   { id: "memory", label: "Virtual Memory", icon: MemoryStick },
   { id: "integrity", label: "Integrity", icon: ShieldCheck },
+  { id: "video", label: "Video Demo", icon: Play },
   { id: "final", label: "Final Results", icon: Trophy },
   { id: "evidence", label: "Evidence", icon: GitBranch },
 ];
@@ -1177,6 +1178,374 @@ function IntegrityPage({ data, onRun, running }) {
 
 
 
+
+function VideoDemoPage({
+  onDemoRun,
+  running,
+  onNavigate,
+}) {
+  const recordingSteps = [
+    {
+      id: 1,
+      title: "Dashboard",
+      page: "dashboard",
+      note: "Introduce the project and headline results.",
+    },
+    {
+      id: 2,
+      title: "Benchmark Lab",
+      page: "benchmarks",
+      note: "Explain PIPE, FIFO, SOCKET and SHM baseline testing.",
+    },
+    {
+      id: 3,
+      title: "Optimization",
+      page: "optimization",
+      note: "Show chunk tuning, SHM-RING and slot-depth experiments.",
+    },
+    {
+      id: 4,
+      title: "Adaptive Engine",
+      page: "adaptive",
+      note: "Show workload-aware method selection.",
+    },
+    {
+      id: 5,
+      title: "Syscall Analyzer",
+      page: "syscalls",
+      note: "Explain syscall and futex reduction.",
+    },
+    {
+      id: 6,
+      title: "CPU Scheduler",
+      page: "scheduler",
+      note: "Show affinity and scheduler-aware measurements.",
+    },
+    {
+      id: 7,
+      title: "Virtual Memory",
+      page: "memory",
+      note: "Explain demand paging and pre-faulting.",
+    },
+    {
+      id: 8,
+      title: "Integrity",
+      page: "integrity",
+      note: "Prove transferred data remains correct.",
+    },
+    {
+      id: 9,
+      title: "Evidence",
+      page: "evidence",
+      note: "Show system environment and experiment manifests.",
+    },
+    {
+      id: 10,
+      title: "Final Results",
+      page: "final",
+      note: "Finish with the strongest validated conclusions.",
+    },
+  ];
+
+  const [completed, setCompleted] = useState(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem("fastipcx-recording-progress")
+      ) || [];
+    }
+    catch {
+      return [];
+    }
+  });
+
+
+  function saveCompleted(next) {
+    setCompleted(next);
+
+    localStorage.setItem(
+      "fastipcx-recording-progress",
+      JSON.stringify(next)
+    );
+  }
+
+
+  function toggleStep(id) {
+    const next = completed.includes(id)
+      ? completed.filter((item) => item !== id)
+      : [...completed, id];
+
+    saveCompleted(next);
+  }
+
+
+  function openStep(step) {
+    if (!completed.includes(step.id)) {
+      saveCompleted([
+        ...completed,
+        step.id,
+      ]);
+    }
+
+    onNavigate(step.page);
+  }
+
+
+  function resetProgress() {
+    saveCompleted([]);
+  }
+
+
+  const demos = [
+    {
+      id: "integrity",
+      icon: ShieldCheck,
+      title: "Integrity Demo",
+      command: "./fastipc verify shm-opt 17 72",
+      description:
+        "Best first live demonstration. Shows bytes sent/received and matching FNV-1a checksums.",
+      time: "~1 sec",
+    },
+    {
+      id: "shm-optimization",
+      icon: Zap,
+      title: "SHM Optimization Demo",
+      command: "./fastipc optimize-shm 37 72 3",
+      description:
+        "Shows baseline shared memory against the optimized SHM-RING.",
+      time: "~3–5 sec",
+    },
+    {
+      id: "scheduler",
+      icon: Cpu,
+      title: "Scheduler Demo",
+      command: "./fastipc analyze-affinity 37 72 3",
+      description:
+        "Shows unpinned, same-CPU and separate-core placement.",
+      time: "~3–6 sec",
+    },
+    {
+      id: "memory",
+      icon: MemoryStick,
+      title: "Page-Fault Demo",
+      command: "./fastipc optimize-memory 37 72 3",
+      description:
+        "Shows demand paging, pre-faulting and MADV_WILLNEED.",
+      time: "~3–6 sec",
+    },
+    {
+      id: "quick-benchmark",
+      icon: Activity,
+      title: "Quick IPC Benchmark",
+      command: "./fastipc benchmark 37 3",
+      description:
+        "Optional live comparison of the main baseline IPC mechanisms.",
+      time: "~2–4 sec",
+    },
+  ];
+
+
+  const progress =
+    (completed.length / recordingSteps.length) * 100;
+
+
+  return (
+    <>
+      <section className="recording-hero">
+        <div>
+          <div className="eyebrow">
+            <Play
+              size={13}
+              fill="currentColor"
+            />
+            RECORDING MODE
+          </div>
+
+          <h1>
+            FastIPC-X
+            <span> Video Walkthrough</span>
+          </h1>
+
+          <p>
+            A guided recording sequence for showing the complete project,
+            from native IPC benchmarking to optimization, kernel analysis,
+            correctness and final evidence.
+          </p>
+        </div>
+
+        <div className="recording-protection">
+          <ShieldCheck size={25} />
+
+          <div>
+            <strong>Safe Live Tests</strong>
+            <span>
+              Separate demo parameters protect final evidence
+            </span>
+          </div>
+        </div>
+      </section>
+
+
+      <Panel
+        title="Recording Progress"
+        subtitle={`${completed.length} of ${recordingSteps.length} sections completed`}
+        action={
+          <button
+            className="recording-reset"
+            onClick={resetProgress}
+          >
+            Reset
+          </button>
+        }
+      >
+        <div className="recording-progress-track">
+          <div
+            className="recording-progress-value"
+            style={{
+              width: `${progress}%`,
+            }}
+          />
+        </div>
+
+        <div className="recording-progress-label">
+          <span>
+            {Math.round(progress)}%
+          </span>
+
+          <span>
+            Recommended video length: 9–12 minutes
+          </span>
+        </div>
+
+
+        <div className="recording-steps">
+          {recordingSteps.map((step) => {
+            const done =
+              completed.includes(step.id);
+
+            return (
+              <div
+                className={`recording-step ${
+                  done ? "done" : ""
+                }`}
+                key={step.id}
+              >
+                <button
+                  className="recording-check"
+                  onClick={() => toggleStep(step.id)}
+                  title="Mark complete"
+                >
+                  {done ? (
+                    <CheckCircle2 size={18} />
+                  ) : (
+                    <span>{String(step.id).padStart(2, "0")}</span>
+                  )}
+                </button>
+
+                <div className="recording-step-main">
+                  <strong>{step.title}</strong>
+                  <span>{step.note}</span>
+                </div>
+
+                <button
+                  className="recording-open"
+                  onClick={() => openStep(step)}
+                >
+                  Open
+                  <ChevronRight size={15} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
+
+
+      <Panel
+        title="Safe Live Experiments"
+        subtitle="Use these while recording without replacing authoritative 100 MB / 64 KB evidence"
+        action={
+          <Badge type="success">
+            Evidence Protected
+          </Badge>
+        }
+      >
+        <div className="video-demo-grid">
+          {demos.map((demo) => {
+            const Icon = demo.icon;
+
+            return (
+              <article
+                className="video-demo-card"
+                key={demo.id}
+              >
+                <div className="video-demo-card-top">
+                  <div className="video-demo-icon">
+                    <Icon size={20} />
+                  </div>
+
+                  <span>
+                    <Timer size={13} />
+                    {demo.time}
+                  </span>
+                </div>
+
+                <h3>{demo.title}</h3>
+
+                <p>{demo.description}</p>
+
+                <code>
+                  {demo.command}
+                </code>
+
+                <button
+                  disabled={running}
+                  onClick={() => onDemoRun(demo.id)}
+                >
+                  {running ? (
+                    <>
+                      <RefreshCw
+                        size={15}
+                        className="spin"
+                      />
+                      Running
+                    </>
+                  ) : (
+                    <>
+                      <Play
+                        size={15}
+                        fill="currentColor"
+                      />
+                      Run Safe Demo
+                    </>
+                  )}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </Panel>
+
+
+      <div className="recording-tip">
+        <TerminalSquare size={20} />
+
+        <div>
+          <strong>
+            Best live experiment for the video
+          </strong>
+
+          <span>
+            Start with Integrity Demo. It is fast, visually clear,
+            and proves the optimized transfer remains correct before
+            you discuss performance.
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+
 function FinalResultsPage({ data }) {
   const rows = data.final_summary || [];
 
@@ -1972,6 +2341,63 @@ function App() {
   }, []);
 
 
+
+  async function runDemo(presetId) {
+    setRunning(true);
+
+    setConsoleData({
+      command: `Loading safe demo: ${presetId}`,
+      stdout: "",
+      stderr: "",
+      exit_code: null,
+    });
+
+    try {
+      const response = await fetch(
+        `${API}/demo/run/${presetId}`,
+        {
+          method: "POST",
+        }
+      );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        setConsoleData({
+          command: `Safe demo: ${presetId}`,
+          stdout: "",
+          stderr:
+            result.error ||
+            "Video demo failed.",
+          exit_code: 1,
+        });
+      }
+
+      else {
+        setConsoleData(result);
+
+        if (result.exit_code === 0) {
+          await loadData();
+        }
+      }
+    }
+
+    catch (error) {
+      setConsoleData({
+        command: `Safe demo: ${presetId}`,
+        stdout: "",
+        stderr: error.message,
+        exit_code: 1,
+      });
+    }
+
+    finally {
+      setRunning(false);
+    }
+  }
+
+
   async function runExperiment(command, args) {
     setRunning(true);
 
@@ -2093,6 +2519,15 @@ function App() {
             data={data}
             onRun={runExperiment}
             running={running}
+          />
+        );
+
+      case "video":
+        return (
+          <VideoDemoPage
+            onDemoRun={runDemo}
+            running={running}
+            onNavigate={setPage}
           />
         );
 

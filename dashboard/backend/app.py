@@ -40,6 +40,40 @@ ALLOWED_METHODS = {
 }
 
 
+DEMO_PRESETS = {
+    "quick-benchmark": {
+        "label": "Quick IPC Benchmark",
+        "command": "benchmark",
+        "args": ["37", "3"],
+        "description": "37 MB payload, 3 trials",
+    },
+    "shm-optimization": {
+        "label": "SHM Optimization",
+        "command": "optimize-shm",
+        "args": ["37", "72", "3"],
+        "description": "37 MB, 72 KB chunks, 3 trials",
+    },
+    "integrity": {
+        "label": "Integrity Check",
+        "command": "verify",
+        "args": ["shm-opt", "17", "72"],
+        "description": "17 MB SHM-RING checksum verification",
+    },
+    "scheduler": {
+        "label": "CPU Scheduler Test",
+        "command": "analyze-affinity",
+        "args": ["37", "72", "3"],
+        "description": "37 MB, 72 KB chunks, 3 trials",
+    },
+    "memory": {
+        "label": "Page-Fault Test",
+        "command": "optimize-memory",
+        "args": ["37", "72", "3"],
+        "description": "37 MB, 72 KB chunks, 3 trials",
+    },
+}
+
+
 def read_csv_file(filename):
     path = RESULTS / filename
 
@@ -287,6 +321,79 @@ def run_fastipc():
     except subprocess.TimeoutExpired:
         return jsonify({
             "error": "Experiment timed out after 300 seconds."
+        }), 408
+
+    except OSError as exc:
+        return jsonify({
+            "error": str(exc)
+        }), 500
+
+
+
+@app.get("/api/demo/presets")
+def demo_presets():
+    return jsonify({
+        "presets": {
+            key: {
+                "label": value["label"],
+                "description": value["description"],
+            }
+            for key, value in DEMO_PRESETS.items()
+        }
+    })
+
+
+@app.post("/api/demo/run/<preset_id>")
+def run_demo_preset(preset_id):
+    preset = DEMO_PRESETS.get(preset_id)
+
+    if not preset:
+        return jsonify({
+            "error": "Unknown demo preset."
+        }), 404
+
+    if not FASTIPC.exists():
+        return jsonify({
+            "error": "fastipc executable was not found. Run make first."
+        }), 500
+
+    command = preset["command"]
+    args = preset["args"]
+
+    command_line = [
+        str(FASTIPC),
+        command,
+        *args,
+    ]
+
+    try:
+        result = subprocess.run(
+            command_line,
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+        return jsonify({
+            "preset": preset_id,
+            "label": preset["label"],
+            "command": " ".join(
+                [
+                    "./fastipc",
+                    command,
+                    *args,
+                ]
+            ),
+            "exit_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "safe_demo": True,
+        })
+
+    except subprocess.TimeoutExpired:
+        return jsonify({
+            "error": "Demo experiment timed out after 300 seconds."
         }), 408
 
     except OSError as exc:
