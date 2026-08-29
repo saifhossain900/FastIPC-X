@@ -520,13 +520,17 @@ FastIPC-X/
 
 ## Project Demo
 
-**Video:** _Add final 2–5 minute project demo link here._
+🎥 **[Watch the FastIPC-X Project Demo](https://drive.google.com/file/d/1z06Px3GYmA7S4fVig15htvWyRcRb50D0/view?usp=sharing)**
 
-Suggested embed pattern after uploading:
+The video demonstrates:
 
-```markdown
-[![FastIPC-X Project Demo](VIDEO_THUMBNAIL_URL)](VIDEO_URL)
-```
+- IPC benchmarking
+- SHM-RING optimization
+- system-call analysis
+- CPU scheduler analysis
+- virtual-memory and page-fault analysis
+- data-integrity verification
+- final performance results
 
 ---
 
