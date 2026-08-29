@@ -534,23 +534,6 @@ The video demonstrates:
 
 ---
 
-## Technical Report
-
-**Report:** _Add the final technical-report link here._
-
-The report includes:
-
-- project overview
-- system architecture
-- IPC implementation
-- optimization results
-- technical challenges in STAR format
-- kernel/scheduler/VM analysis
-- scientific limitations
-- lessons learned
-- conclusion
-
----
 
 ## Final Takeaway
 
